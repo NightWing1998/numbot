@@ -18,7 +18,7 @@ def post():
 	# print(req.get('queryResult'))
 	intent = req.get('queryResult').get('intent').get('displayName')
 	if( intent == 'Default Welcome Intent'):
-		return jsonify({'fulfillmentText':"Welcome"})
+		return jsonify({'fulfillmentText':"Enter a number with a year, trivia or math and see the magic"})
 	elif(intent == 'numbers'):
 		params = req.get('queryResult').get('parameters')
 		num = str(int(params.get('number')))
@@ -27,6 +27,8 @@ def post():
 		# print(new_url)
 		reply = requests.get(new_url).json()["text"]
 		return jsonify({'fulfillmentText':reply})
+	else:
+		return jsonify({'fulfillmentText':"Enter a number with a year, trivia or math and see the magic"})
 		
 
 if( __name__ == '__main__'):
