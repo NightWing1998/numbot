@@ -1,0 +1,107 @@
+1. Access https://bit.ly/chatinstall, download the files and run sudo sh install.sh to install all the dependencies. If permission is denied use chmod for directory
+2. Make a folder chatbot
+3. Make a file 'main.py' and start editing it
+4. Add the imports for Flask
+	'from flask import Flask,request,jsonify'
+5. Lets start by creating an app variable that will control our serving and routing
+	'app = Flask(__name__)'
+6. Next lets serve some initial test string from the app to check our imports
+	'@app.route('/',methods=['GET'])
+	def home():
+		return "Hello"
+	
+	if( __name__ == '__main__'):
+		app.run()'
+7. Run the command 'python3 main.py' and check the corresponding localhost URL to see the string "Hello"
+8. Now we wish to serve our app via https but that cannot be done using localhost. So we use grok that is installed from install.sh script file.
+9. So let's open a new terminal tab and run the command 'ngrok http 5000' where http is the protocol on which our python3 app was running and 5000 is the port. It should  generate an http and https URL for your localhost:5000. Visit the URL to see the "Hello" message get printed.
+10. Now let's try a post request on the same URL but first add a route for it using the following command
+	'@app.route('/',methods=['POST'])
+	def post():
+		req = request.data
+		return req'
+11. Restart the 'python3 main.py' application. But now to view the changes we can use postman or we can use command for URL communication commonly know as 'cURL'.
+	curl -X POST <YOUR ngrok URL> -d "Trying to post" -H Content-Type:application/text
+
+
+
+
+
+12. Now let us move ahead with the flow in which our chatbot should work.
+13. Any chatbot is nothing but an AI ML agent that replies to your questions.
+14. So now we won't be creating a nlp model of our own for this but instead use 'DialogFlow' for it. So register on DialogFlow and let's proceed.
+15. Now on DialogFlow dashboard create a new agent.
+16. Name it ChatBot and proceed.
+17. Now what we want is to send a message response to ChatBot agent and get a reply from it. That is done by using fulfilment. So in the side pane go to fulfilment and enable web hooks and add your grok URL in it and save. But wait we are not done yet. For starters we need to have some intents accessible to webhooks. That can be done from sidebar panel in intents and then go to fullfillment below, enable webhooks and save.
+
+18. Now let's edit our code a bit to check the data that is coming from DialogFlow.
+	from flask import Flask,request,jsonify,make_response
+	import json
+	import requests
+	
+	...
+	@app.route('/',methods=['POST'])
+	def post():
+		req = request.get_json(silent = True,force = True)
+		print(req)
+		# return req
+
+19. Type something in right hand side panel and check python3 console you will see some json response with an error. IGNORE THE ERROR FOR NOW.
+20. Now we would like our server to reply instead of dialogflow replying so in our POST route we will extract the intent name from displayName inside intent. So the code goes as follows:-
+	@app.route('/',methods=['POST'])
+	def post():
+		req = request.get_json(silent = True,force = True)
+		# print(req.get('queryResult'))
+		intent = req.get('queryResult').get('intent').get('displayName')
+		if( intent == 'Default Welcome Intent'):
+			return jsonify({'fulfillmentText':"Welcome"})
+
+21. Restart the python3 server and enter some default text like "His" or "hey" in the panel and it should display "Welcome".
+
+
+22. Create a new intent in the intent tab from side panel and name it "number"
+23. Create a new entity from entity tab in side panel and name it "type". Create 3 different entities in it name "trivia","number" and "year" and gives synonyms as per your convenience.
+24. Go back to the intent tab select the number intent and start adding training phrases.
+Add multiple training phrases like "tell me a trivia about 33",etc similar types of statements that could be expected for trivia and number. Repeat the same for numbers and year.
+25. NOTE : AFTER ENTERING TRAINING PHRASES YOU CAN THE ENTITIES GETTING AUTOMATICALLY DETECTED BUT IF NOT RIGHT CLICK ON IT AND MANUALLY SELECT IT. 
+26. Enable fullfillment and save
+
+
+27. Now back to our code let's modify our code for this new intent
+
+
+	@app.route('/',methods=['POST'])
+	def post():
+		req = request.get_json(silent = True,force = True)
+		# print(req.get('queryResult'))
+		intent = req.get('queryResult').get('intent').get('displayName')
+		if( intent == 'Default Welcome Intent'):
+			return jsonify({'fulfillmentText':"Welcome"})
+		elif(intent == 'numbers'):
+			params = req.get('queryResult').get('parameters')
+			num = str(int(params.get('number')))
+			tempType = params.get('type')
+			return jsonify({'fulfillmentText':'NUMBER RECEIVED'})
+
+
+28. Now we will use an API known as numbersapi for some interesting reply for given trivia and number
+29. So we now use requests library to make those calls.
+	@app.route('/',methods=['POST'])
+	def post():
+		req = request.get_json(silent = True,force = True)
+		# print(req.get('queryResult'))
+		intent = req.get('queryResult').get('intent').get('displayName')
+		if( intent == 'Default Welcome Intent'):
+			return jsonify({'fulfillmentText':"Enter a number with a year, trivia or math and see the magic"})
+		elif(intent == 'numbers'):
+			params = req.get('queryResult').get('parameters')
+			num = str(int(params.get('number')))
+			tempType = params.get('type')
+			new_url = url + num + "/" + tempType + "?json"
+			# print(new_url)
+			reply = requests.get(new_url).json()["text"]
+			return jsonify({'fulfillmentText':reply})
+		else:
+			return jsonify({'fulfillmentText':"Enter a number with a year, trivia or math and see the magic"})
+
+30. Now our dialogflow and python3 server are connected.!!!!!
