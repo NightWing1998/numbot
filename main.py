@@ -18,7 +18,7 @@ def post():
 	# print(req.get('queryResult'))
 	intent = req.get('queryResult').get('intent').get('displayName')
 	if( intent == 'Default Welcome Intent'):
-		return jsonify({'fulfillmentText':"Enter a number with a year, trivia or math and see the magic"})
+		return jsonify({'fulfillmentText':"Hey! Here's what I can do: \n1. Say some trivia about a number\n2. Say something special about a year \n3. Say some mathematical fact a number\nEnter this sample message:\nTell me some trivia about 42\nto see the magic"})
 	elif(intent == 'numbers'):
 		params = req.get('queryResult').get('parameters')
 		num = str(int(params.get('number')))
